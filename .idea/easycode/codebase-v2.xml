@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.obiscr.chatgpt.settings.EasyCodeState">
+    <option name="projectFiles" value="$PROJECT_DIR$/app/src/androidTest/java/edu/ucne/ronalfyjimenez_ap2_p1/ExampleInstrumentedTest.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/src/main/java/edu/ucne/ronalfyjimenez_ap2_p1/ui/theme/Color.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/src/main/java/edu/ucne/ronalfyjimenez_ap2_p1/ui/theme/Theme.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/src/main/java/edu/ucne/ronalfyjimenez_ap2_p1/ui/theme/Type.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/src/main/java/edu/ucne/ronalfyjimenez_ap2_p1/MainActivity.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/src/test/java/edu/ucne/ronalfyjimenez_ap2_p1/ExampleUnitTest.kt;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/app/build.gradle.kts;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/build.gradle.kts;C:/Android/AndroidStudioProjects/RonalfyJimenez_AP2_P1/settings.gradle.kts" />
+  </component>
+</project>
