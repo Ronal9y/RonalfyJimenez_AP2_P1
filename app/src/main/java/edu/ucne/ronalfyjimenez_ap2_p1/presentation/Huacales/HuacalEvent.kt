@@ -1,6 +1,7 @@
 package edu.ucne.ronalfyjimenez_ap2_p1.presentation.Huacales
 
 sealed interface HuacalEvent {
+    data class FechaChange(val v: String) : HuacalEvent
     data class ClienteChange(val v: String) : HuacalEvent
     data class CantidadChange(val v: String) : HuacalEvent
     data class PrecioChange(val v: String) : HuacalEvent
@@ -9,4 +10,5 @@ sealed interface HuacalEvent {
     data class Select(val id: Int) : HuacalEvent
     data class Filter(val cliente: String?) : HuacalEvent
     data object ClearMessages : HuacalEvent
+    object ClearForm : HuacalEvent
 }

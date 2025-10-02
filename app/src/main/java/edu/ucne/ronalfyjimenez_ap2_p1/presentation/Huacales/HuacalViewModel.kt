@@ -22,7 +22,9 @@ class HuacalViewModel @Inject constructor(
     val state: StateFlow<HuacalUiState> = _state.asStateFlow()
 
     init {
-
+        if (_state.value.id == null) {
+            _state.update { it.copy(fecha = LocalDate.now().toString()) }
+        }
         observeHuacales()
     }
 
@@ -36,6 +38,9 @@ class HuacalViewModel @Inject constructor(
 
     fun onEvent(e: HuacalEvent) {
         when (e) {
+            is HuacalEvent.FechaChange -> {
+                _state.update { it.copy(fecha = e.v) }
+            }
             is HuacalEvent.ClienteChange -> {
                 _state.update { it.copy(cliente = e.v) }
             }
@@ -52,10 +57,10 @@ class HuacalViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 id = h.idEntrada,
+                                fecha = h.fecha,
                                 cliente = h.nombreCliente,
                                 cantidad = h.cantidad.toString(),
-                                precio = h.precio.toString(),
-                                fecha = h.fecha
+                                precio = h.precio.toString()
                             )
                         }
                     }
@@ -63,10 +68,23 @@ class HuacalViewModel @Inject constructor(
             }
             HuacalEvent.Save -> {
                 viewModelScope.launch {
-                    if (_state.value.cliente.isBlank() || _state.value.cantidad.isBlank() || _state.value.precio.isBlank()) {
+                    if (_state.value.fecha.isBlank() || _state.value.cliente.isBlank() ||
+                        _state.value.cantidad.isBlank() || _state.value.precio.isBlank()) {
                         _state.update {
                             it.copy(
                                 errorMessage = "Todos los campos son requeridos",
+                                successMessage = null
+                            )
+                        }
+                        return@launch
+                    }
+
+                    val fecha = try {
+                        LocalDate.parse(_state.value.fecha)
+                    } catch (e: Exception) {
+                        _state.update {
+                            it.copy(
+                                errorMessage = "Formato de fecha inválido. Use YYYY-MM-DD",
                                 successMessage = null
                             )
                         }
@@ -101,7 +119,7 @@ class HuacalViewModel @Inject constructor(
                                 errorMessage = null
                             )
                         }
-                        limpiarFormulario()
+
                     } catch (ex: Exception) {
                         _state.update {
                             it.copy(
@@ -136,7 +154,6 @@ class HuacalViewModel @Inject constructor(
             }
             is HuacalEvent.Filter -> {
                 viewModelScope.launch {
-
                     repo.observeFiltered(
                         cliente = e.cliente,
                         fecha = null,
@@ -156,6 +173,11 @@ class HuacalViewModel @Inject constructor(
                     )
                 }
             }
+            HuacalEvent.ClearForm -> {
+                _state.update {
+                    HuacalUiState(fecha = LocalDate.now().toString())
+                }
+            }
         }
     }
 
@@ -163,10 +185,11 @@ class HuacalViewModel @Inject constructor(
         _state.update {
             it.copy(
                 id = null,
+                fecha = LocalDate.now().toString(),
                 cliente = "",
                 cantidad = "",
                 precio = "",
-                fecha = java.time.LocalDate.now().toString()   // <-- String
+                errorMessage = null
             )
         }
     }
