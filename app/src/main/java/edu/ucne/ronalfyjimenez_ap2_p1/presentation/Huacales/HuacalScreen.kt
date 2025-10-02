@@ -5,10 +5,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -19,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,9 +34,11 @@ fun HuacalScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(idEntrada) {
-        idEntrada?.let { viewModel.onEvent(HuacalEvent.Select(it)) }
-    }
 
+        if (idEntrada != null && idEntrada > 0 && state.value.id == null) {
+            viewModel.onEvent(HuacalEvent.Select(idEntrada))
+        }
+    }
 
     LaunchedEffect(state.value.successMessage) {
         if (state.value.successMessage != null) {
@@ -74,6 +80,19 @@ fun HuacalScreen(
         ) {
 
             OutlinedTextField(
+                value = state.value.fecha,
+                onValueChange = { viewModel.onEvent(HuacalEvent.FechaChange(it)) },
+                label = { Text("Fecha (YYYY-MM-DD)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Fecha")
+                },
+                placeholder = { Text("Ej: ${LocalDate.now()}") },
+                isError = state.value.fecha.isBlank() && state.value.errorMessage != null
+            )
+
+            OutlinedTextField(
                 value = state.value.cliente,
                 onValueChange = { viewModel.onEvent(HuacalEvent.ClienteChange(it)) },
                 label = { Text("Nombre del Cliente") },
@@ -92,7 +111,6 @@ fun HuacalScreen(
                 isError = state.value.cantidad.isBlank() && state.value.errorMessage != null
             )
 
-
             OutlinedTextField(
                 value = state.value.precio,
                 onValueChange = { viewModel.onEvent(HuacalEvent.PrecioChange(it)) },
@@ -102,6 +120,40 @@ fun HuacalScreen(
                 singleLine = true,
                 isError = state.value.precio.isBlank() && state.value.errorMessage != null
             )
+
+            if (state.value.cantidad.isNotBlank() && state.value.precio.isNotBlank()) {
+                val cantidad = state.value.cantidad.toIntOrNull() ?: 0
+                val precio = state.value.precio.toDoubleOrNull() ?: 0.0
+                val total = cantidad * precio
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Total Calculado:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "$${String.format("%.2f", total)}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "$cantidad unidades × $${String.format("%.2f", precio)} c/u",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Button(
                 onClick = {
@@ -114,7 +166,8 @@ fun HuacalScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                enabled = state.value.cliente.isNotBlank() &&
+                enabled = state.value.fecha.isNotBlank() &&
+                        state.value.cliente.isNotBlank() &&
                         state.value.cantidad.isNotBlank() &&
                         state.value.precio.isNotBlank()
             ) {
@@ -122,7 +175,6 @@ fun HuacalScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Guardar")
             }
-
 
             state.value.successMessage?.let { message ->
                 Card(
