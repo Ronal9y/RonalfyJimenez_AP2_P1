@@ -105,14 +105,6 @@ fun HuacalListScreen(
                         )
                         Text("Total", fontSize = 12.sp)
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            state.lista.sumOf { it.cantidad }.toString(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text("Huacales", fontSize = 12.sp)
-                    }
                 }
             }
 
