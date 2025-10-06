@@ -8,7 +8,6 @@ sealed interface HuacalEvent {
     data object Save : HuacalEvent
     data object Delete : HuacalEvent
     data class Select(val id: Int) : HuacalEvent
-    data class Filter(val cliente: String?) : HuacalEvent
     data object ClearMessages : HuacalEvent
     object ClearForm : HuacalEvent
 }
