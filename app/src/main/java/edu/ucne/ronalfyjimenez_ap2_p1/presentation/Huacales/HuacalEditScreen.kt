@@ -15,37 +15,23 @@ fun HuacalEditScreen(
     idEntrada: Int?,
     goBack: () -> Unit
 ) {
-    val viewModel: HuacalViewModel = hiltViewModel()
-    val state = viewModel.state.collectAsStateWithLifecycle()
+    val vm: HuacalViewModel = hiltViewModel()
+    val state by vm.state.collectAsStateWithLifecycle()
 
-    var shouldNavigateBack by remember { mutableStateOf(false) }
-
-    LaunchedEffect(idEntrada) {
-        if (idEntrada != null && idEntrada > 0 && viewModel.state.value.id == null) {
-            viewModel.onEvent(HuacalEvent.Select(idEntrada))
-        }
+    LaunchedEffect(Unit) {
+        vm.onEvent(HuacalEvent.ClearMessages)
+        if (idEntrada != null && idEntrada > 0 && state.id == null)
+            vm.onEvent(HuacalEvent.Select(idEntrada))
     }
 
-    val success by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(success.successMessage) {
-        success.successMessage?.let {
+    val success = state.successMessage
+    LaunchedEffect(success) {
+        if (success != null) {
             delay(800)
-            viewModel.onEvent(HuacalEvent.ClearForm)
+            vm.onEvent(HuacalEvent.ClearMessages)
             goBack()
         }
     }
 
-    LaunchedEffect(shouldNavigateBack) {
-        if (shouldNavigateBack) {
-            goBack()
-        }
-    }
-
-    HuacalScreen(
-        idEntrada = idEntrada,
-        goBack = {
-
-            goBack()
-        }
-    )
+    HuacalScreen(idEntrada = idEntrada, goBack = goBack)
 }
