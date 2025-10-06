@@ -7,7 +7,7 @@ import edu.ucne.ronalfyjimenez_ap2_p1.data.local.entity.HuacalEntity
 
 @Database(
     entities = [HuacalEntity::class],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class HuacalesDb : RoomDatabase() {
