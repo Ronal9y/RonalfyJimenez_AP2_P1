@@ -25,4 +25,19 @@ interface HuacalDao {
 
     @Query("SELECT * FROM Huacales WHERE (:cliente IS NULL OR nombreCliente LIKE '%' || :cliente || '%') AND (:fecha IS NULL OR fecha = :fecha) AND (:minCant IS NULL OR cantidad >= :minCant) AND (:maxCant IS NULL OR cantidad <= :maxCant) ORDER BY idEntrada DESC")
     fun observeFiltered(cliente: String?, fecha: String?, minCant: Int?, maxCant: Int?): Flow<List<HuacalEntity>>
+
+    @Query("SELECT COUNT(*) FROM Huacales WHERE nombreCliente = :nombre AND idEntrada != :idActual")
+    suspend fun cuentaNombre(nombre: String, idActual: Int = 0): Int
+
+    @Query("""
+    SELECT * FROM Huacales 
+    WHERE (:q IS NULL OR :q = '')
+       OR nombreCliente LIKE '%' || :q || '%'
+       OR fecha          LIKE '%' || :q || '%'
+       OR cantidad       LIKE '%' || :q || '%'
+       OR precio         LIKE '%' || :q || '%'
+    ORDER BY idEntrada DESC
+""")
+    fun observeFilteredGeneral(q: String): Flow<List<HuacalEntity>>
 }
+
