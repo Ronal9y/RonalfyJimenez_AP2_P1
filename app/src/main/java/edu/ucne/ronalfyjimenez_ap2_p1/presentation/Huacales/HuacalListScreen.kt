@@ -4,11 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,13 +23,13 @@ fun HuacalListScreen(
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
 ) {
-    val viewModel: HuacalViewModel = hiltViewModel()
+    val viewModel: HuacalListViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var filtroCliente by remember { mutableStateOf("") }
 
+    var filtroGlobal by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        viewModel.onEvent(HuacalEvent.Filter(null))
+    LaunchedEffect(filtroGlobal) {
+        viewModel.onEvent(HuacalListEvent.Filter(filtroGlobal.takeIf { it.isNotBlank() }))
     }
 
     Scaffold(
@@ -42,9 +38,9 @@ fun HuacalListScreen(
                 title = {
                     Text(
                         "Entradas de Huacales",
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        color = Color.White
+                        fontSize = 20.sp
                     )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -69,48 +65,22 @@ fun HuacalListScreen(
         ) {
 
             OutlinedTextField(
-                value = filtroCliente,
-                onValueChange = {
-                    filtroCliente = it
-                    viewModel.onEvent(HuacalEvent.Filter(it.takeIf { it.isNotBlank() }))
-                },
-                label = { Text("Filtrar por cliente") },
+                value = filtroGlobal,
+                onValueChange = { filtroGlobal = it },
+                label = { Text("Buscar...") },
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Icon(Icons.Default.Search, contentDescription = "Buscar")
-                },
-                placeholder = { Text("Escriba el nombre del cliente...") }
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val lista = state.lista
+            val totalRegistros = lista.size
+            val totalDinero = lista.sumOf { it.cantidad * it.precio }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            state.lista.size.toString(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text("Total", fontSize = 12.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (state.lista.isEmpty()) {
+            if (lista.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -140,10 +110,12 @@ fun HuacalListScreen(
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.lista) { huacal ->
+                    items(lista) { huacal ->
                         HuacalRow(
                             h = huacal,
                             onEdit = { onEdit(huacal.idEntrada) },
@@ -152,10 +124,42 @@ fun HuacalListScreen(
                     }
                 }
             }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            totalRegistros.toString(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Text("Registros", fontSize = 12.sp)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "$${"%,.2f".format(totalDinero)}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Text("Total", fontSize = 12.sp)
+                    }
+                }
+            }
         }
     }
 }
-
 @Composable
 private fun HuacalRow(
     h: edu.ucne.ronalfyjimenez_ap2_p1.data.local.entity.HuacalEntity,
@@ -176,11 +180,7 @@ private fun HuacalRow(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    h.nombreCliente,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                Text(h.nombreCliente, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text("Fecha: ${h.fecha}")
                 Text("Cantidad: ${h.cantidad} · Precio: $${h.precio}")
             }
@@ -195,23 +195,13 @@ private fun HuacalRow(
             ) {
                 DropdownMenuItem(
                     text = { Text("Editar") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar")
-                    },
-                    onClick = {
-                        showMenu = false
-                        onEdit()
-                    }
+                    leadingIcon = { Icon(Icons.Default.Edit, null) },
+                    onClick = { showMenu = false; onEdit() }
                 )
                 DropdownMenuItem(
                     text = { Text("Eliminar") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
-                    },
-                    onClick = {
-                        showMenu = false
-                        onDelete()
-                    }
+                    leadingIcon = { Icon(Icons.Default.Delete, null) },
+                    onClick = { showMenu = false; onDelete() }
                 )
             }
         }
