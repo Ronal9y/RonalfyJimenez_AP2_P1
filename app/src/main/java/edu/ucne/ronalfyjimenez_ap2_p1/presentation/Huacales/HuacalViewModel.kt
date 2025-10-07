@@ -22,17 +22,9 @@ class HuacalViewModel @Inject constructor(
     val state: StateFlow<HuacalUiState> = _state.asStateFlow()
 
     init {
+
         if (_state.value.id == null) {
             _state.update { it.copy(fecha = LocalDate.now().toString()) }
-        }
-        observeHuacales()
-    }
-
-    private fun observeHuacales() {
-        viewModelScope.launch {
-            repo.observeAll().collect { lista ->
-                _state.update { it.copy(lista = lista) }
-            }
         }
     }
 
@@ -104,6 +96,19 @@ class HuacalViewModel @Inject constructor(
                         return@launch
                     }
 
+                    val cliente = _state.value.cliente.trim()
+                    val idActual = _state.value.id ?: 0
+
+                    if (repo.existeNombre(cliente, idActual)) {
+                        _state.update {
+                            it.copy(
+                                errorMessage = "Ya existe un registro con ese nombre de cliente",
+                                successMessage = null
+                            )
+                        }
+                        return@launch
+                    }
+
                     try {
                         val huacal = HuacalEntity(
                             idEntrada = _state.value.id ?: 0,
@@ -115,11 +120,13 @@ class HuacalViewModel @Inject constructor(
                         repo.save(huacal)
                         _state.update {
                             it.copy(
-                                successMessage = if (_state.value.id == null) "Huacal guardado exitosamente" else "Huacal actualizado exitosamente",
+                                successMessage = if (_state.value.id == null)
+                                    "Huacal guardado exitosamente"
+                                else
+                                    "Huacal actualizado exitosamente",
                                 errorMessage = null
                             )
                         }
-
                     } catch (ex: Exception) {
                         _state.update {
                             it.copy(
@@ -152,22 +159,9 @@ class HuacalViewModel @Inject constructor(
                     }
                 }
             }
-            is HuacalEvent.Filter -> {
-                viewModelScope.launch {
-                    repo.observeFiltered(
-                        cliente = e.cliente,
-                        fecha = null,
-                        minCant = null,
-                        maxCant = null
-                    ).collect { listaFiltrada ->
-                        _state.update { it.copy(lista = listaFiltrada) }
-                    }
-                }
-            }
             HuacalEvent.ClearMessages -> {
                 _state.update {
                     it.copy(
-                        mensaje = null,
                         errorMessage = null,
                         successMessage = null
                     )
