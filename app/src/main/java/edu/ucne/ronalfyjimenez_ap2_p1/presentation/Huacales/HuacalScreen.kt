@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,17 +34,9 @@ fun HuacalScreen(
     val viewModel: HuacalViewModel = hiltViewModel()
     val state = viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(idEntrada) {
-
+    LaunchedEffect(Unit) {
         if (idEntrada != null && idEntrada > 0 && state.value.id == null) {
             viewModel.onEvent(HuacalEvent.Select(idEntrada))
-        }
-    }
-
-    LaunchedEffect(state.value.successMessage) {
-        if (state.value.successMessage != null) {
-            delay(1000)
-            goBack()
         }
     }
 
