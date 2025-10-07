@@ -9,7 +9,6 @@ data class HuacalUiState(
     val cliente: String = "",
     val cantidad: String = "",
     val precio: String = "",
-    val lista: List<HuacalEntity> = emptyList(),
     val mensaje: String? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null

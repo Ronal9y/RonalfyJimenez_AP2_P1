@@ -23,19 +23,16 @@ class HuacalViewModel @Inject constructor(
 
     init {
 
-        observeHuacales()
-    }
-
-    private fun observeHuacales() {
-        viewModelScope.launch {
-            repo.observeAll().collect { lista ->
-                _state.update { it.copy(lista = lista) }
-            }
+        if (_state.value.id == null) {
+            _state.update { it.copy(fecha = LocalDate.now().toString()) }
         }
     }
 
     fun onEvent(e: HuacalEvent) {
         when (e) {
+            is HuacalEvent.FechaChange -> {
+                _state.update { it.copy(fecha = e.v) }
+            }
             is HuacalEvent.ClienteChange -> {
                 _state.update { it.copy(cliente = e.v) }
             }
@@ -52,10 +49,10 @@ class HuacalViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 id = h.idEntrada,
+                                fecha = h.fecha,
                                 cliente = h.nombreCliente,
                                 cantidad = h.cantidad.toString(),
-                                precio = h.precio.toString(),
-                                fecha = h.fecha
+                                precio = h.precio.toString()
                             )
                         }
                     }
@@ -63,10 +60,23 @@ class HuacalViewModel @Inject constructor(
             }
             HuacalEvent.Save -> {
                 viewModelScope.launch {
-                    if (_state.value.cliente.isBlank() || _state.value.cantidad.isBlank() || _state.value.precio.isBlank()) {
+                    if (_state.value.fecha.isBlank() || _state.value.cliente.isBlank() ||
+                        _state.value.cantidad.isBlank() || _state.value.precio.isBlank()) {
                         _state.update {
                             it.copy(
                                 errorMessage = "Todos los campos son requeridos",
+                                successMessage = null
+                            )
+                        }
+                        return@launch
+                    }
+
+                    val fecha = try {
+                        LocalDate.parse(_state.value.fecha)
+                    } catch (e: Exception) {
+                        _state.update {
+                            it.copy(
+                                errorMessage = "Formato de fecha inválido. Use YYYY-MM-DD",
                                 successMessage = null
                             )
                         }
@@ -86,6 +96,19 @@ class HuacalViewModel @Inject constructor(
                         return@launch
                     }
 
+                    val cliente = _state.value.cliente.trim()
+                    val idActual = _state.value.id ?: 0
+
+                    if (repo.existeNombre(cliente, idActual)) {
+                        _state.update {
+                            it.copy(
+                                errorMessage = "Ya existe un registro con ese nombre de cliente",
+                                successMessage = null
+                            )
+                        }
+                        return@launch
+                    }
+
                     try {
                         val huacal = HuacalEntity(
                             idEntrada = _state.value.id ?: 0,
@@ -97,11 +120,13 @@ class HuacalViewModel @Inject constructor(
                         repo.save(huacal)
                         _state.update {
                             it.copy(
-                                successMessage = if (_state.value.id == null) "Huacal guardado exitosamente" else "Huacal actualizado exitosamente",
+                                successMessage = if (_state.value.id == null)
+                                    "Huacal guardado exitosamente"
+                                else
+                                    "Huacal actualizado exitosamente",
                                 errorMessage = null
                             )
                         }
-                        limpiarFormulario()
                     } catch (ex: Exception) {
                         _state.update {
                             it.copy(
@@ -134,26 +159,17 @@ class HuacalViewModel @Inject constructor(
                     }
                 }
             }
-            is HuacalEvent.Filter -> {
-                viewModelScope.launch {
-
-                    repo.observeFiltered(
-                        cliente = e.cliente,
-                        fecha = null,
-                        minCant = null,
-                        maxCant = null
-                    ).collect { listaFiltrada ->
-                        _state.update { it.copy(lista = listaFiltrada) }
-                    }
-                }
-            }
             HuacalEvent.ClearMessages -> {
                 _state.update {
                     it.copy(
-                        mensaje = null,
                         errorMessage = null,
                         successMessage = null
                     )
+                }
+            }
+            HuacalEvent.ClearForm -> {
+                _state.update {
+                    HuacalUiState(fecha = LocalDate.now().toString())
                 }
             }
         }
@@ -163,10 +179,11 @@ class HuacalViewModel @Inject constructor(
         _state.update {
             it.copy(
                 id = null,
+                fecha = LocalDate.now().toString(),
                 cliente = "",
                 cantidad = "",
                 precio = "",
-                fecha = java.time.LocalDate.now().toString()   // <-- String
+                errorMessage = null
             )
         }
     }

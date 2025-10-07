@@ -20,4 +20,9 @@ class HuacalRepository @Inject constructor(private val dao: HuacalDao) {
 
     fun observeFiltered(cliente: String? = null, fecha: String? = null, minCant: Int? = null, maxCant: Int? = null): Flow<List<HuacalEntity>> =
         dao.observeFiltered(cliente, fecha, minCant, maxCant)
+
+    suspend fun existeNombre(nombre: String, idActual: Int = 0): Boolean =
+        dao.cuentaNombre(nombre, idActual) > 0
+    fun observeFilteredGeneral(q: String): Flow<List<HuacalEntity>> =
+        dao.observeFilteredGeneral(q)
 }
